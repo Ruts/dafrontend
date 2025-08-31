@@ -1,0 +1,42 @@
+/* App.css */
+
+.container {
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+}
+
+.chatBox {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  max-width: 600px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.message {
+  margin-bottom: 0.75rem;
+}
+
+.message.sent {
+  text-align: right;
+}
+
+.message.received {
+  text-align: left;
+}
+
+.bubble {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.bubble.sent {
+  background-color: #dcf8c6;
+}
+
+.bubble.received {
+  background-color: #fff;
+}

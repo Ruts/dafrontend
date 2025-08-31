@@ -15,7 +15,6 @@ class QuestionStore {
 
   constructor() {
     makeAutoObservable(this);
-    this.startPolling();
   }
 
   setQuestion(value: string) {
@@ -76,26 +75,32 @@ class QuestionStore {
     }
   }
 
+  chatHistory: { type: 'sent' | 'received', text: string }[] = [];
+
+  addSentMessage() {
+    if (this.whatsappMessage.trim()) {
+      this.chatHistory.push({ type: 'sent', text: this.whatsappMessage });
+    }
+  }
+
   async fetchIncomingMessage() {
     try {
-      const res = await fetch(this.url + '/receive-whatsapp', {
-        method: 'POST',
-      });
+      const res = await fetch(this.url + '/latest-whatsapp');
       const data = await res.json();
-      runInAction(() => {
-        this.incomingMessage = `From: ${data.from}, Message: ${data.message}`;
-      });
+      const incomingText = `From ${data.from}: ${data.message}`;
+
+      // Avoid duplicates
+      if (!this.chatHistory.some(msg => msg.type === 'received' && msg.text === incomingText)) {
+        runInAction(() => {
+          this.chatHistory.push({ type: 'received', text: incomingText });
+          this.incomingMessage = incomingText;
+        });
+      }
     } catch (err) {
       runInAction(() => {
         this.incomingMessage = 'Failed to fetch incoming message.' + err;
       });
     }
-  }
-
-  startPolling() {
-    setInterval(() => {
-      this.fetchIncomingMessage();
-    }, 5000); // Poll every 5 seconds
   }
 }
 
