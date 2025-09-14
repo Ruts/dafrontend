@@ -1,69 +1,149 @@
-# React + TypeScript + Vite
+# 🌱 Digital Agriculture Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript + Vite application for managing farms, analyzing crop data, and interacting with an AI-powered backend.
+This frontend integrates authentication, farm management, harvest tracking, dashboards, and interactive farm mapping with Leaflet.js.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 1. Authentication & Authorization
 
-## Expanding the ESLint configuration
+Create account, login, and OTP verification via backend API.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+JWT token stored in localStorage and synced across tabs.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Auth-protected routes (/dashboard).
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### 2. Dashboard
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Sidebar-based navigation between modules.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Sections: Farm Manager, Reports, Chat, Drone Simulation.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Decodes JWT to show farmer info (name & phone).
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 3. Farm Management
+
+Add and view farms (name, crop, acreage, polygon coordinates).
+
+Visualize farms with Leaflet.js maps.
+
+Save and fetch harvest records from backend.
+
+View farm polygons and open farm location in Google Maps.
+
+### 4. Leaflet Map Integration
+
+Uses react-leaflet and leaflet.css.
+
+Polygon drawing and rendering for farm boundaries.
+
+Supports fetching grid images (drone/satellite tiles).
+
+### 5. State Management with MobX
+
+farmManagerStore handles farms & harvests.
+
+dashboardStore manages dashboard steps.
+
+Reactive UI updates with @observer.
+
+### 6. Backend API Integration
+
+Configurable via VITE_API_BASE environment variable.
+
+Endpoints: /create-account, /login, /verify-code, /farms, /harvests, etc.
+
+## 🛠️ Tech Stack
+
+Frontend Framework: React + TypeScript + Vite
+
+Routing: React Router
+
+State Management: MobX
+
+Maps & Visualization: Leaflet + React-Leaflet
+
+Authentication: JWT + LocalStorage Sync
+
+Styling: CSS Modules
+
+## ⚙️ Installation & Setup
+### 1. Clone the Repository
+git clone https://github.com/your-username/digital-agriculture-frontend.git
+cd digital-agriculture-frontend
+
+### 2. Install Dependencies
+npm install
+
+### 3. Environment Variables
+
+Create a .env file in the root:
+
+VITE_API_BASE=http://127.0.0.1:8000
+
+
+For production, set this to your deployed backend URL.
+
+### 4. Run Development Server
+npm run dev
+
+
+The app will run on:
+👉 http://localhost:5173
+
+📖 Project Structure
+src/
+│── App.tsx              # Routing & authentication guard
+│── pages/
+│   ├── AuthPage.tsx      # Signup/Login/Verify workflow
+│   ├── Dashboard.tsx     # Main dashboard with sidebar navigation
+│   ├── FarmManager.tsx   # Farm & harvest management + Leaflet maps
+│   ├── Reports.tsx       # Reports section
+│   ├── Chat.tsx          # AI-powered chat
+│   └── DroneSim.tsx      # Drone simulation UI
+│
+│── stores/
+│   ├── DashboardStore.ts # MobX store for dashboard navigation
+│   └── FarmManagerStore.ts # MobX store for farms & harvests
+│
+│── components/
+│   └── Sidebar.tsx       # Dashboard sidebar navigation
+│
+│── styles/               # CSS styles for pages
+│
+└── main.tsx              # React entry point
+
+## 🔑 Authentication Flow
+
+Signup → Enter name & phone → API sends WhatsApp code.
+
+Login → Enter phone → Redirects to verify step.
+
+Verify → Enter code → JWT token issued → Saved in localStorage.
+
+Dashboard Access → Routes protected with Navigate based on token presence.
+
+Token Sync → Listens to storage events for multi-tab support.
+
+## 🗺️ Farm Manager (Leaflet Maps)
+
+Uses react-leaflet for map rendering.
+
+Displays farm polygons stored as coordinate arrays.
+
+Provides clickable Google Maps link for each farm center.
+
+Supports adding farms with polygon coordinates through a map modal (FarmMap).
+
+## 🧩 Future Enhancements
+
+Offline-first support with local caching.
+
+Farm image grid overlay for drone analysis.
+
+Graphical reports (harvest yield trends, soil health).
+
+Real-time WebSocket updates for farm alerts.
+
+This project is designed to work with the Farm Management & Advisory API
+ (FastAPI backend).

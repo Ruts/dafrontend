@@ -1,0 +1,16 @@
+.farm-manager {
+  padding: 2rem;
+}
+.farm-manager ul {
+  list-style: none;
+  padding: 0;
+}
+.farm-manager li {
+  margin-bottom: 1rem;
+}
+.map-popup {
+  background: #f9f9f9;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  margin-top: 1rem;
+}
