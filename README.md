@@ -1,4 +1,4 @@
-# 🌱 Digital Agriculture Frontend
+# 🌱 Digital Agronomist Frontend
 
 A React + TypeScript + Vite application for managing farms, analyzing crop data, and interacting with an AI-powered backend.
 This frontend integrates authentication, farm management, harvest tracking, dashboards, and interactive farm mapping with Leaflet.js.
