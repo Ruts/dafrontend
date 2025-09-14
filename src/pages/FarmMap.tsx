@@ -1,9 +1,12 @@
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder';
+import 'leaflet-control-geocoder';
+import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 
-import { MapContainer, Marker, Polygon, Popup, TileLayer, useMapEvents } from 'react-leaflet';
+import * as L from 'leaflet';
 
-import L from 'leaflet';
+import { MapContainer, Marker, Polygon, TileLayer, useMapEvents } from 'react-leaflet';
+
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import { useState } from 'react';
@@ -12,9 +15,11 @@ const GeocoderControl = () => {
   const map = useMap();
 
   useEffect(() => {
-    const geocoder = L.Control.geocoder({
-      defaultMarkGeocode: true,
-    }).addTo(map);
+    // const geocoder = L.Control.geocoder().addTo(map);
+    const geocoder = (L.Control as any).geocoder().addTo(map);
+    // const geocoder = L.Control.geocoder({
+    //   defaultMarkGeocode: true,
+    // }).addTo(map);
 
     return () => {
       map.removeControl(geocoder);
@@ -23,8 +28,6 @@ const GeocoderControl = () => {
 
   return null;
 };
-
-delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
   iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
