@@ -12,6 +12,6 @@ export default defineConfig({
       },
     })],
    build: {
-    outDir: 'dist' // optional: rename to match Azure expectations
+    outDir: 'build' // optional: rename to match Azure expectations
   }
 })

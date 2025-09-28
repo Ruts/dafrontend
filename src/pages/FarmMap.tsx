@@ -15,11 +15,7 @@ const GeocoderControl = () => {
   const map = useMap();
 
   useEffect(() => {
-    // const geocoder = L.Control.geocoder().addTo(map);
     const geocoder = (L.Control as any).geocoder().addTo(map);
-    // const geocoder = L.Control.geocoder({
-    //   defaultMarkGeocode: true,
-    // }).addTo(map);
 
     return () => {
       map.removeControl(geocoder);
@@ -38,7 +34,7 @@ L.Icon.Default.mergeOptions({
 type Coordinates = { lat: number; lng: number };
 
 const pointIcon = L.icon({
-  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href, // Replace with your actual image path
+  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -48,7 +44,7 @@ const pointIcon = L.icon({
 
 type Props = {
     onClose: () => void;
-    onSave: (polygon: Coordinates[]) => void; // or whatever signature it has
+    onSave: (polygon: Coordinates[]) => void;
 };
 
 type LatLng = { lat: number; lng: number };

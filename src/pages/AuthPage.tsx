@@ -1,102 +1,100 @@
-import '../styles/AuthPage.css';
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
 
-import { useNavigate } from 'react-router-dom'
-import { useState } from 'react';
+import { authStore } from '../stores/AuthStore';
+import { observer } from 'mobx-react-lite';
+import { useNavigate } from 'react-router-dom';
 
-const AuthPage = ({ setToken }: { setToken: (token: string) => void }) => {
-
+const AuthPage = observer(({ setToken }: { setToken: (token: string) => void }) => {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<'signup' | 'verify' | 'login' >('login');
-  const [phone, setPhone] = useState('');
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [loginError, setError] = useState('');
-
-  // const API_BASE = "http://127.0.0.1:8000";
-  // const API_BASE = "https://dabackend-c8fcgxdhdyfff7am.canadacentral-01.azurewebsites.net";
-  const API_BASE = import.meta.env.VITE_API_BASE;
-
-  const createAccount = async () => {
-    const res = await fetch(API_BASE + '/create-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, name }),
-    });
-
-    const data = await res.json();
-
-    if (data.status === 'code_sent') {
-      setStep('verify');
-    } else {
-      setError("Unable to create account");
-    }
-  };
-
-  const login = async () => {
-    const res = await fetch(API_BASE + '/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
-    });
-
-    const data = await res.json();
-
-    if (data.status === 'verify') {
-      setStep('verify');
-    } else {
-      setError("Account does not exist. Kindly create account.");
-    }
-  };
-
-  const verifyCode = async () => {
-  const res = await fetch(API_BASE + '/verify-code', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, code }),
-  });
-  const data = await res.json();
-
-  console.log("data", data);
-  if (data.status === 'verified') {
-      setToken(data.token);
-      console.log("data.token", data.token);
-      navigate('/dashboard'); // redirect
-    }
-  };
+  const handleCreateAccount = () => authStore.createAccount();
+  const handleLogin = () => authStore.login();
+  const handleVerifyCode = () => authStore.verifyCode(setToken, navigate);
 
   return (
-    <div className="auth-container">
-      {step === 'signup' && (
-        <div className="auth-box">
-          <h2>Create Account</h2>
-          <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input type="text" placeholder="Phone (e.g. 2547xxxxxxx)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <button onClick={createAccount}>Send Verification Code</button>
-        </div>
-      )}
+    <Grid container justifyContent="center" alignItems="center" minHeight="100vh">
+      <Grid container spacing={2}>
+        <Paper elevation={3} sx={{ padding: 4 }}>
+          <Typography variant="body1" gutterBottom>
+            To receive messages from WhatsApp, start by texting the words
+            <strong> "join related-girl"</strong> to <strong>+14155238886</strong> on your WhatsApp messaging application.
+          </Typography>
 
-      {step === 'login' && (
-        <div className="auth-box">
-          <h2>Login</h2>
-          <input type="text" placeholder="Phone (e.g. 2547xxxxxxx)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          {loginError && <text>{loginError}</text>}
-          <button onClick={login}>Login</button>
-          <button onClick={() => setStep('signup')}>Create Account</button>
-        </div>
-      )}
+          {authStore.step === 'signup' && (
+            <Box mt={3}>
+              <Typography variant="h5" gutterBottom>Create Account</Typography>
+              <TextField
+                fullWidth
+                label="Name"
+                margin="normal"
+                value={authStore.name}
+                onChange={(e) => authStore.setName(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                label="Phone (e.g. 2547xxxxxxx)"
+                margin="normal"
+                value={authStore.phone}
+                onChange={(e) => authStore.setPhone(e.target.value)}
+              />
+              <Button variant="contained" color="primary" fullWidth onClick={handleCreateAccount}>
+                Send Verification Code
+              </Button>
+            </Box>
+          )}
 
-      {step === 'verify' && (
-        <div className="auth-box">
-          <h2>Enter Verification Code</h2>
-          <input type="text" placeholder="Code from WhatsApp" value={code} onChange={(e) => setCode(e.target.value)} />
-          <button onClick={verifyCode}>Verify</button>
-        </div>
-      )}
+          {authStore.step === 'login' && (
+            <Box mt={3}>
+              <Typography variant="h5" gutterBottom>Login</Typography>
+              <TextField
+                fullWidth
+                label="Phone (e.g. 2547xxxxxxx)"
+                margin="normal"
+                value={authStore.phone}
+                onChange={(e) => authStore.setPhone(e.target.value)}
+              />
+              <Button variant="contained" color="primary" fullWidth onClick={handleLogin}>
+                Login
+              </Button>
+              <Button variant="text" fullWidth onClick={() => authStore.setStep('signup')}>
+                Create Account
+              </Button>
+            </Box>
+          )}
 
-      {/* {step === 'dashboard' && <Dashboard token={token} />} */}
-    </div>
+          {authStore.step === 'verify' && (
+            <Box mt={3}>
+              <Typography variant="h5" gutterBottom>Enter Verification Code</Typography>
+              <TextField
+                fullWidth
+                label="Code from WhatsApp"
+                margin="normal"
+                value={authStore.code}
+                onChange={(e) => authStore.setCode(e.target.value)}
+              />
+              <Button variant="contained" color="success" fullWidth onClick={handleVerifyCode}>
+                Verify
+              </Button>
+            </Box>
+          )}
+
+          {authStore.error && (
+            <Box mt={3}>
+              <Alert severity="error">{authStore.error}</Alert>
+            </Box>
+          )}
+        </Paper>
+      </Grid>
+    </Grid>
   );
-};
+});
 
 export default AuthPage;

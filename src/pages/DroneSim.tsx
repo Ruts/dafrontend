@@ -1,19 +1,40 @@
-import '../styles/FarmManager.css';
-
 import * as React from "react";
 
-import { farmManagerStore } from '../stores/FarmManagerStore';
-import { gridImageStore } from '../stores/GridImageStore';
-import { observer } from 'mobx-react';
-import { soilSampleStore } from '../stores/SoilSampleStore';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  type SelectChangeEvent,
+} from "@mui/material";
+
+import Grid from '@mui/material/Grid';
+import { farmManagerStore } from "../stores/FarmManagerStore";
+import { gridImageStore } from "../stores/GridImageStore";
+import { observer } from "mobx-react";
+import { soilSampleStore, type SoilSample } from "../stores/SoilSampleStore";
 
 interface DroneSimProps {
-    token: string;
+  token: string;
+}
+
+export interface GridImage {
+  id: string;
+  farmId: string;
+  owner: string;
+  date: string;
+  imageUrl: string[];
 }
 
 @observer
-class DroneSim extends React.Component<DroneSimProps> {    
-    public componentDidMount() {
+class DroneSim extends React.Component<DroneSimProps> {
+    componentDidMount() {
         farmManagerStore.token = this.props.token;
         farmManagerStore.fetchFarms();
         gridImageStore.fetchGridImages(this.props.token);
@@ -22,146 +43,276 @@ class DroneSim extends React.Component<DroneSimProps> {
 
     render() {
         return (
-            <div className="farm-manager">
-                <div>
-                    <h2>🧪 Add Soil Sample</h2>
-
-                    <select value={soilSampleStore.sample.farmId} onChange={e => this.handleChange("farmId", e.target.value)}>
-                        <option value="">Select Farm</option>
-                        {farmManagerStore.farms.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+        <Box p={3}>
+            {/* Soil Sample Form */}
+            <Card sx={{ mb: 4 }}>
+            <CardContent>
+                <Typography variant="h5" gutterBottom>🧪 Add Soil Sample</Typography>
+                <Grid container spacing={2}>
+                <Grid container spacing={2}>
+                    <FormControl fullWidth>
+                    <InputLabel>Farm</InputLabel>
+                    <Select
+                        value={soilSampleStore.sample.farmId}
+                        label="Farm"
+                        onChange={(e) => this.handleChange("farmId", e.target.value)}
+                    >
+                        <MenuItem value="">Select Farm</MenuItem>
+                        {farmManagerStore.farms.map((f) => (
+                        <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
                         ))}
-                    </select>
+                    </Select>
+                    </FormControl>
+                </Grid>
+                <Grid container spacing={2}>
+                    <TextField
+                    fullWidth
+                    label="Date"
+                    type="date"
+                    value={soilSampleStore.sample.date}
+                    onChange={(e) => this.handleChange("date", e.target.value)}
+                    />
+                </Grid>
 
-                    <input type="date" value={soilSampleStore.sample.date} onChange={e => this.handleChange("date", e.target.value)} />
+                {([
+                    ["pH", "pH"],
+                    ["EC (dS/m)", "electricalConductivity"],
+                    ["Organic Matter (%)", "organicMatter"],
+                    ["Nitrogen (ppm)", "nitrogen"],
+                    ["Phosphorus (ppm)", "phosphorus"],
+                    ["Potassium (ppm)", "potassium"],
+                    ["Calcium (ppm)", "calcium"],
+                    ["Magnesium (ppm)", "magnesium"],
+                    ["Sulfur (ppm)", "sulfur"],
+                    ["Zinc (ppm)", "zinc"],
+                    ["Iron (ppm)", "iron"],
+                    ["Soil Texture", "soilTexture"],
+                    ["Moisture (%)", "moistureContent"],
+                    ] as [string, keyof SoilSample][]).map(([label, key]) => (
+                    <Grid container spacing={2} key={key}>
+                        <TextField
+                        fullWidth
+                        label={label}
+                        type={key === "soilTexture" ? "text" : "number"}
+                        value={soilSampleStore.sample[key]}
+                        onChange={(e) =>
+                            soilSampleStore.setField(
+                            key,
+                            key === "soilTexture" ? e.target.value : parseFloat(e.target.value)
+                            )
+                        }
+                        />
+                    </Grid>
+                    ))}
+                </Grid>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                        <p>pH</p>
-                        <input type="number" placeholder="pH" value={soilSampleStore.sample.pH} onChange={e => this.handleChange("pH", parseFloat(e.target.value))} />
-                        <p>EC (dS/m)</p>
-                        <input type="number" placeholder="EC (dS/m)" value={soilSampleStore.sample.electricalConductivity} onChange={e => this.handleChange("electricalConductivity", parseFloat(e.target.value))} />
-                        <p>Organic Matter (%)</p>
-                        <input type="number" placeholder="Organic Matter (%)" value={soilSampleStore.sample.organicMatter} onChange={e => this.handleChange("organicMatter", parseFloat(e.target.value))} />
-                        <p>Nitrogen (ppm)</p>
-                        <input type="number" placeholder="Nitrogen (ppm)" value={soilSampleStore.sample.nitrogen} onChange={e => this.handleChange("nitrogen", parseFloat(e.target.value))} />
-                        <p>Potassium (ppm)</p>
-                        <input type="number" placeholder="Potassium (ppm)" value={soilSampleStore.sample.phosphorus} onChange={e => this.handleChange("phosphorus", parseFloat(e.target.value))} />
-                        <p>Potassium (ppm)</p>
-                        <input type="number" placeholder="Potassium (ppm)" value={soilSampleStore.sample.potassium} onChange={e => this.handleChange("potassium", parseFloat(e.target.value))} />
-                        <p>Calcium (ppm)</p>
-                        <input type="number" placeholder="Calcium (ppm)" value={soilSampleStore.sample.calcium} onChange={e => this.handleChange("calcium", parseFloat(e.target.value))} />
-                        <p>Magnesium (ppm)</p>
-                        <input type="number" placeholder="Magnesium (ppm)" value={soilSampleStore.sample.magnesium} onChange={e => this.handleChange("magnesium", parseFloat(e.target.value))} />
-                        <p>Sulfur (ppm)</p>
-                        <input type="number" placeholder="Sulfur (ppm)" value={soilSampleStore.sample.sulfur} onChange={e => this.handleChange("sulfur", parseFloat(e.target.value))} />
-                        <p>Zinc (ppm)</p>
-                        <input type="number" placeholder="Zinc (ppm)" value={soilSampleStore.sample.zinc} onChange={e => this.handleChange("zinc", parseFloat(e.target.value))} />
-                        <p>Iron (ppm)</p>
-                        <input type="number" placeholder="Iron (ppm)" value={soilSampleStore.sample.iron} onChange={e => this.handleChange("iron", parseFloat(e.target.value))} />
-                        <p>Soil Texture</p>
-                        <input type="text" placeholder="Soil Texture" value={soilSampleStore.sample.soilTexture} onChange={e => this.handleChange("soilTexture", e.target.value)} />
-                        <p>Moisture (%)</p>
-                        <input type="number" placeholder="Moisture (%)" value={soilSampleStore.sample.moistureContent} onChange={e => this.handleChange("moistureContent", parseFloat(e.target.value))} />
-                    </div>
+                <Box mt={2}>
+                <Button
+                    variant="contained"
+                    onClick={() => soilSampleStore.submitSample(this.props.token)}
+                    disabled={soilSampleStore.submitting}
+                >
+                    {soilSampleStore.submitting ? "Submitting..." : "Submit Sample"}
+                </Button>
+                {soilSampleStore.success && (
+                    <Typography mt={2} color="success.main">✅ Sample stored successfully!</Typography>
+                )}
+                </Box>
+            </CardContent>
+            </Card>
 
-                    <button onClick={() => soilSampleStore.submitSample(this.props.token)} disabled={soilSampleStore.submitting}>
-                        {soilSampleStore.submitting ? "Submitting..." : "Submit Sample"}
-                    </button>
-
-                    {soilSampleStore.success && <p>✅ Sample stored successfully!</p>}
-                </div>
-                <div>
-                    <h2>🧪 Soil Sample Viewer</h2>
-
-                    <select onChange={e => soilSampleStore.setFilter("farmId", e.target.value)}>
-                        <option value="">All Farms</option>
-                        {farmManagerStore.farms.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+            {/* Soil Sample Viewer */}
+            <Card sx={{ mb: 4 }}>
+            <CardContent>
+                <Typography variant="h5" gutterBottom>🧪 Soil Sample Viewer</Typography>
+                <Grid container spacing={2}>
+                <Grid container spacing={2}>
+                    <FormControl fullWidth>
+                    <InputLabel>Farm</InputLabel>
+                    <Select
+                        label="Farm"
+                        onChange={(e: SelectChangeEvent) =>
+                            soilSampleStore.setFilter("farmId", e.target.value)
+                        }
+                    >
+                        <MenuItem value="">All Farms</MenuItem>
+                        {farmManagerStore.farms.map((f) => (
+                        <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
                         ))}
-                    </select>
+                    </Select>
+                    </FormControl>
+                </Grid>
+                <Grid container spacing={2}>
+                    <TextField
+                    fullWidth
+                    label="Start Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    onChange={(e) => soilSampleStore.setFilter("startDate", e.target.value)}
+                    />
+                </Grid>
+                <Grid container spacing={2}>
+                    <TextField
+                    fullWidth
+                    label="End Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    onChange={(e) => soilSampleStore.setFilter("endDate", e.target.value)}
+                    />
+                </Grid>
+                </Grid>
 
-                    <input type="date" onChange={e => soilSampleStore.setFilter("startDate", e.target.value)} />
-                    <input type="date" onChange={e => soilSampleStore.setFilter("endDate", e.target.value)} />
-                    <button onClick={() => soilSampleStore.fetchSamples(this.props.token)}>Filter</button>
+                <Box mt={2}>
+                <Button variant="outlined" onClick={() => soilSampleStore.fetchSamples(this.props.token)}>
+                    Filter
+                </Button>
+                </Box>
 
-                    {soilSampleStore.loading ? (
-                        <p>Loading samples...</p>
-                    ) : (
-                        soilSampleStore.samples?.map((sample, i) => (
-                        <div key={i} style={{ marginBottom: "1rem" }}>
-                            <h4>🌾 {farmManagerStore.farms.find(f => f.id === sample.farmId)?.name || sample.farmId}</h4>
-                            <p>📅 {sample.date}</p>
-                            <ul>
-                            <li>pH: {sample.pH}</li>
-                            <li>EC: {sample.electricalConductivity} dS/m</li>
-                            <li>Organic Matter: {sample.organicMatter}%</li>
-                            <li>N: {sample.nitrogen} ppm</li>
-                            <li>P: {sample.phosphorus} ppm</li>
-                            <li>K: {sample.potassium} ppm</li>
-                            <li>Ca: {sample.calcium} ppm</li>
-                            <li>Mg: {sample.magnesium} ppm</li>
-                            <li>S: {sample.sulfur} ppm</li>
-                            <li>Zn: {sample.zinc} ppm</li>
-                            <li>Fe: {sample.iron} ppm</li>
-                            <li>Texture: {sample.soilTexture}</li>
-                            <li>Moisture: {sample.moistureContent}%</li>
-                            </ul>
-                        </div>
-                        ))
-                    )}
-                </div>
-                <div>
-                    <h2>🖼️ Grid Image Upload</h2>
-                    <input type="date" onChange={e => gridImageStore.setDate(e.target.value)} />
-                    <select onChange={e => gridImageStore.setFarmId(e.target.value)}>
-                        {farmManagerStore.farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
+                <Box mt={3}>
+                {soilSampleStore.loading ? (
+                    <Typography>Loading samples...</Typography>
+                ) : (
+                    soilSampleStore.samples?.map((sample, i) => (
+                    <Card key={i} sx={{ mb: 2 }}>
+                        <CardContent>
+                        <Typography variant="h6">
+                            🌾 {farmManagerStore.getFarmName(sample.farmId)}
+                        </Typography>
+                        <Typography variant="body2">📅 {sample.date}</Typography>
+                        <ul>
+                            {Object.entries(sample).map(([key, value]) =>
+                            key !== "farmId" && key !== "date" ? (
+                                <li key={key}>
+                                {key}: {value}
+                                </li>
+                            ) : null
+                            )}
+                        </ul>
+                        </CardContent>
+                    </Card>
+                    ))
+                )}
+                </Box>
+            </CardContent>
+            </Card>
+
+            {/* Grid Image Upload */}
+            <Card>
+            <CardContent>
+                <Typography variant="h5" gutterBottom>🖼️ Grid Image Upload</Typography>
+                <Grid container spacing={2}>
+                <Grid container spacing={2}>
+                    <TextField
+                    fullWidth
+                    label="Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    onChange={(e) => gridImageStore.setDate(e.target.value)}
+                    />
+                </Grid>
+                <Grid container spacing={2}>
+                    <FormControl fullWidth>
+                    <InputLabel>Farm</InputLabel>
+                    <Select
+                        label="Farm"
+                        onChange={(e: SelectChangeEvent) =>
+                            soilSampleStore.setFilter("farmId", e.target.value)
+                        }
+                    >
+                        {farmManagerStore.farms.map((f) => (
+                        <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
+                        ))}
+                    </Select>
+                    </FormControl>
+                </Grid>
+                <Grid container spacing={2}>
+                    <Button variant="outlined" component="label" fullWidth>
+                    Upload Images
                     <input
                         type="file"
                         multiple
-                        onChange={e => {
-                            if (e.target.files) {
+                        hidden
+                        onChange={(e) => {
+                        if (e.target.files) {
                             gridImageStore.setFiles(e.target.files);
-                            }
+                        }
                         }}
                     />
+                    </Button>
+                </Grid>
+                </Grid>
 
-                    <button onClick={this.handleSubmit} disabled={gridImageStore.uploading}>
-                        {gridImageStore.uploading ? "Uploading..." : "Upload"}
-                    </button>
+                <Box mt={2}>
+                <Button
+                    variant="contained"
+                    onClick={this.handleSubmit}
+                    disabled={gridImageStore.uploading}
+                >
+                    {gridImageStore.uploading ? "Uploading..." : "Upload"}
+                </Button>
+                <Button sx={{ ml: 2 }} variant="outlined" onClick={this.handleSimulation}>
+                    Simulate
+                </Button>
+                {gridImageStore.uploadSuccess && (
+                    <Typography mt={2} color="success.main">✅ Upload successful!</Typography>
+                )}
+                </Box>
 
-                    {gridImageStore.uploadSuccess && <p>✅ Upload successful!</p>}
-
-                    <h3>📂 Uploaded Grid Images</h3>
-                    {gridImageStore.gridImages.length === 0 ? (
-                        <p>No grid images available yet.</p>
-                    ) : (
-                        gridImageStore.gridImages.map((img, i) => (
-                        <div key={i}>
-                            <h4>🌾 Farm: {farmManagerStore.getFarmName(img.farmId)}</h4>
-                            <p>📅 Date: {img.date}</p>
-
-                            {img.imageUrl.map((url: string, j: number) => {
-                                return (
-                                    <div key={j} style={{ marginBottom: "1rem" }}>
-                                    <img src={url} alt={`Grid ${img.date} - ${j}`} width="300" />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        ))
-                    )}
-                </div>
-            </div>
+                <Box mt={4}>
+                <Typography variant="h6">📂 Uploaded Grid Images</Typography>
+                {gridImageStore.gridImages.length === 0 ? (
+                    <Typography>No grid images available yet.</Typography>
+                ) : (
+                    gridImageStore.gridImages.map((img, i) => (
+                    <Box key={i} mb={2}>
+                        <Typography variant="subtitle1">
+                        🌾 Farm: {farmManagerStore.getFarmName(img.farmId)}
+                        </Typography>
+                        <Typography variant="body2">📅 Date: {img.date}</Typography>
+                        <Grid container spacing={2}>
+                                            {img.imageUrl.map((url: string, j: number) => (
+                        <Grid container spacing={2} key={j}>
+                            <Card>
+                            <CardContent>
+                                <img
+                                src={url}
+                                alt={`Grid ${img.date} - ${j}`}
+                                style={{ width: '100%', borderRadius: 8 }}
+                                />
+                            </CardContent>
+                            </Card>
+                        </Grid>
+                        ))}
+                    </Grid>
+                    </Box>
+                ))
+                )}
+            </Box>
+            </CardContent>
+        </Card>
+        </Box>
         );
     }
 
     private handleSubmit = () => {
-        gridImageStore.submitImages(gridImageStore.farmId, gridImageStore.date, gridImageStore.files, this.props.token);
+        gridImageStore.submitImages(
+        gridImageStore.farmId,
+        gridImageStore.date,
+        gridImageStore.files,
+        this.props.token
+        );
     };
 
-    private handleChange = (key: string, value: string | number) => {
-        soilSampleStore.setField(key as any, value);
+    private handleSimulation = () => {
+        gridImageStore.simulateTest(
+        gridImageStore.farmId,
+        gridImageStore.date,
+        this.props.token
+        );
+    };
+
+    private handleChange = <K extends keyof SoilSample>(key: K, value: SoilSample[K]) => {
+        soilSampleStore.setField(key, value);
     };
 }
 

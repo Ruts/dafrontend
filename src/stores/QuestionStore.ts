@@ -1,8 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 class QuestionStore {
-  // url = "http://127.0.0.1:8000";
-  url = "https://dabackend-c8fcgxdhdyfff7am.canadacentral-01.azurewebsites.net";
+  url = import.meta.env.VITE_API_BASE;
 
   question = '';
   answer = '';
@@ -12,6 +11,11 @@ class QuestionStore {
   whatsappMessage = '';
   whatsappStatus = '';
   incomingMessage = '';
+
+  // chatHistory: { type: 'sent' | 'received', text: string }[] = [];
+  chatHistory: any[] = [];
+  error: string | null = null;
+  user: { name: string; phone: string; } = { name: '', phone: '' };
 
   constructor() {
     makeAutoObservable(this);
@@ -75,8 +79,6 @@ class QuestionStore {
     }
   }
 
-  chatHistory: { type: 'sent' | 'received', text: string }[] = [];
-
   addSentMessage() {
     if (this.whatsappMessage.trim()) {
       this.chatHistory.push({ type: 'sent', text: this.whatsappMessage });
@@ -99,6 +101,32 @@ class QuestionStore {
     } catch (err) {
       runInAction(() => {
         this.incomingMessage = 'Failed to fetch incoming message.' + err;
+      });
+    }
+  }
+
+  async fetchChatHistory(token: string) {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const response = await fetch(`${this.url}/chat-history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      runInAction(() => {
+        this.chatHistory = Array.isArray(data) ? data : [];
+        this.loading = false;
+      });
+    } catch (err: any) {
+      runInAction(() => {
+        this.error = err.message || "Failed to fetch chat history";
+        this.loading = false;
       });
     }
   }

@@ -1,5 +1,7 @@
 import { makeAutoObservable, runInAction } from "mobx";
 
+import type { GridImage } from "../pages/DroneSim";
+
 export class GridImageStore {
     url = import.meta.env.VITE_API_BASE;
 
@@ -7,7 +9,7 @@ export class GridImageStore {
     date: string = "";
     files: File[] = [];
 
-    gridImages: any[] = [];
+    gridImages: GridImage[] = [];
     uploading = false;
     uploadSuccess = false
 
@@ -24,7 +26,29 @@ export class GridImageStore {
     }
 
     setFiles(files: FileList | File[] | null) {
-  this.files = files ? Array.from(files) : [];
+        this.files = files ? Array.from(files) : [];
+    }
+
+    async simulateTest(farmId: string, date: string, token: string) {
+        console.log("farmId; ", farmId, " date: ", date);
+        const formData = new FormData();
+        formData.append("farmId", farmId);
+        formData.append("date", date);
+
+        try {
+            const res = await fetch(`${this.url}/analyze-farm-day`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json();
+
+            runInAction(() => {
+                console.log(data);
+            });
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     async submitImages(farmId: string, date: string, files: File[], token: string) {
@@ -69,7 +93,7 @@ export class GridImageStore {
             const res = await fetch(`${this.url}/grid-images`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            const data = await res.json();
+            const data: GridImage[] = await res.json();
             runInAction(() => {
                 this.gridImages = data;
             });

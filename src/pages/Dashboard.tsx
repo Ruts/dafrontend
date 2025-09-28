@@ -39,7 +39,7 @@ class Dashboard extends React.Component<DashboardProps> {
                     <main className="main-content">
                         {dashboardStore.step === "FarmManager" && (<FarmManager token={this.props.token} />)}
                         {dashboardStore.step === "Reports" && (<Reports token={this.props.token} />)}
-                        {dashboardStore.step === "Chat" && (<Chat />)}
+                        {dashboardStore.step === "Chat" && (<Chat token={this.props.token} />)}
                         {dashboardStore.step === "DroneSim" && (<DroneSim token={this.props.token} />)}
                     </main>
                 </div>

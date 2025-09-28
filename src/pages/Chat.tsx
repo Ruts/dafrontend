@@ -1,66 +1,106 @@
-import '../styles/App.css';
+import {
+  Box,
+  CircularProgress,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Typography,
+} from '@mui/material';
+import React, { useEffect } from 'react';
 
-import { observer } from 'mobx-react-lite';
+import { observer } from 'mobx-react';
 import { questionStore } from '../stores/QuestionStore';
-import { useEffect } from 'react';
 
-const Chat = observer(() => {
+interface ChatProps {
+  token: string;
+}
+
+const Chat: React.FC<ChatProps> = observer(({ token }) => {
   useEffect(() => {
-    const interval = setInterval(() => {
-      questionStore.fetchIncomingMessage();
-    }, 2000); // refresh every 5 seconds
+    questionStore.fetchChatHistory(token);
+  }, [token]);
 
-    return () => clearInterval(interval); // cleanup on unmount
-  }, []);
+  const formatTimestamp = (ts: string) => new Date(ts).toLocaleString();
+
+  const renderFormattedMessage = (text: string) => {
+    const lines = text.split('\n').filter(line => line.trim() !== '');
+
+    return lines.map((line, index) => {
+      if (line.startsWith('***') && line.endsWith('***')) {
+        return (
+          <Typography key={index} variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
+            {line.replace(/\*\*\*/g, '').trim()}
+          </Typography>
+        );
+      } else if (line.startsWith('**') && line.endsWith('**')) {
+        return (
+          <Typography key={index} variant="subtitle1" sx={{ fontWeight: 600, mt: 1 }}>
+            {line.replace(/\*\*/g, '').trim()}
+          </Typography>
+        );
+      } else {
+        const bolded = line.replace(/\*(.*?)\*/g, (_, match) => `<strong>${match}</strong>`);
+        return (
+          <Typography
+            key={index}
+            variant="body2"
+            sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}
+            dangerouslySetInnerHTML={{ __html: bolded }}
+          />
+        );
+      }
+    });
+  };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h2>Ask the AI</h2>
-      <textarea
-        value={questionStore.question}
-        onChange={(e) => questionStore.setQuestion(e.target.value)}
-        placeholder="Type your question..."
-        style={{ width: '300px', marginRight: '1rem' }}
-      />
-      <button onClick={() => questionStore.fetchAnswer()} disabled={questionStore.loading}>
-        {questionStore.loading ? 'Loading...' : 'Ask'}
-      </button>
-      <p><strong>Answer:</strong> {questionStore.answer}</p>
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>💬 Chat History</Typography>
 
-      <h2>Send WhatsApp Message</h2>
-      <input
-        type="text"
-        value={questionStore.whatsappNumber}
-        onChange={(e) => questionStore.setWhatsappNumber(e.target.value)}
-        placeholder="Enter WhatsApp number (e.g. +2547xxxxxxx)"
-        style={{ width: '300px', marginRight: '1rem' }}
-      />
-      <input
-        type="text"
-        value={questionStore.whatsappMessage}
-        onChange={(e) => questionStore.setWhatsappMessage(e.target.value)}
-        placeholder="Enter message..."
-        style={{ width: '300px', marginTop: '0.5rem', marginRight: '1rem' }}
-      />
-      <button onClick={() => {
-        questionStore.sendWhatsApp();
-        questionStore.addSentMessage(); // store sent message
-      }} style={{ marginTop: '0.5rem' }}>
-        Send WhatsApp
-      </button>
-      <p>{questionStore.whatsappStatus}</p>
-
-      <h2>Chat History</h2>
-      <div className="chatBox">
-        {questionStore.chatHistory.map((msg, index) => (
-          <div key={index} className={`message ${msg.type}`}>
-            <span className={`bubble ${msg.type}`}>
-              {msg.text}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+      {questionStore.loading ? (
+        <Box textAlign="center" mt={4}>
+          <CircularProgress />
+          <Typography>Loading chat history...</Typography>
+        </Box>
+      ) : (
+        <Paper elevation={3} sx={{ maxHeight: 600, overflowY: 'auto', padding: 2 }}>
+          <List>
+            {questionStore.chatHistory.map((msg, index) => (
+              <React.Fragment key={msg.id || index}>
+                <ListItem
+                  sx={{
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    textAlign: msg.role === 'user' ? 'right' : 'left',
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Box
+                        sx={{
+                          backgroundColor: msg.role === 'user' ? '#d1e7dd' : '#f0f0f0',
+                          padding: 1.5,
+                          borderRadius: 2,
+                          maxWidth: '80%',
+                        }}
+                      >
+                        {renderFormattedMessage(msg.message)}
+                      </Box>
+                    }
+                    secondary={
+                      <Typography variant="caption" color="text.secondary">
+                        {msg.role === 'user' ? 'You' : 'Assistant'} • {formatTimestamp(msg.timestamp)}
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+                <Divider />
+              </React.Fragment>
+            ))}
+          </List>
+        </Paper>
+      )}
+    </Box>
   );
 });
 

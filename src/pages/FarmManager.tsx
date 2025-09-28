@@ -2,6 +2,17 @@ import '../styles/FarmManager.css';
 
 import * as React from "react";
 
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { MapContainer, Polygon, TileLayer } from 'react-leaflet';
 
 import FarmMap from './FarmMap';
@@ -10,9 +21,9 @@ import { gridImageStore } from '../stores/GridImageStore';
 import { observer } from 'mobx-react';
 
 export interface Coordinates {
-    lat: number;
-    lng: number 
-};
+  lat: number;
+  lng: number;
+}
 
 export interface FarmForm {
     id: string;
@@ -41,108 +52,114 @@ export interface Environment {
     temperature: number;
 }
 
-interface FarmManagerProps {
-    token: string;
-}
-
 @observer
-class FarmManager extends React.Component<FarmManagerProps> {    
-    public componentDidMount() {
-        farmManagerStore.token = this.props.token;
-        farmManagerStore.fetchFarms();
-        gridImageStore.fetchGridImages(this.props.token);
-    }
+class FarmManager extends React.Component<{ token: string }> {
+  componentDidMount() {
+    farmManagerStore.token = this.props.token;
+    farmManagerStore.fetchFarms();
+    gridImageStore.fetchGridImages(this.props.token);
+  }
 
-    render() {
-        return (
-            <div className="farm-manager">
-                {farmManagerStore.step === "Farms" && (
-                    farmManagerStore.farms.length > 0 ? 
-                    <div>
-                        <h2>My Farms</h2>
-                        <ul>
-                            {farmManagerStore.farms.map(farm => {
-                                const center = this.getCenter(farm.coordinates); // ✅ now it's used
-                                const mapsUrl = `https://www.google.com/maps?q=${center.lat},${center.lng}`;
-                                return (
-                                    <li key={farm.id}>
-                                        <strong>{farm.name}</strong> — {farm.crop}, {farm.acreage} acres
-                                        <br />
-                                        <MapContainer
-                                            center={[farm.coordinates[0].lat, farm.coordinates[0].lng]}
-                                            zoom={17}
-                                            style={{ height: '200px', width: '100%' }}
-                                        >
-                                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                            <Polygon positions={farm.coordinates.map(p => [p.lat, p.lng])} />
-                                        </MapContainer>
-                                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-                                            📍 View Location on Google Maps
-                                        </a>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                        <button onClick={() => farmManagerStore.setStep("AddFarm")}>Add Farm</button>
-                        <button onClick={() => farmManagerStore.setStep("AddHarvest")}>Add Harvest</button>
-                    </div>
-                    :   <div>
-                            <h2>My Farms</h2>
-                            <p>No farms found. Click add</p>
-                            <button onClick={() => farmManagerStore.setStep("AddFarm")}>Add Farm</button>
-                        </div>
-                )}
+  getCenter(coords: Coordinates[]) {
+    const latSum = coords.reduce((sum, p) => sum + p.lat, 0);
+    const lngSum = coords.reduce((sum, p) => sum + p.lng, 0);
+    return {
+      lat: latSum / coords.length,
+      lng: lngSum / coords.length,
+    };
+  }
 
-                {farmManagerStore.step === "AddFarm" && (
-                    <div>
-                        <h3>Add New Farm</h3>
-                        <input placeholder="Farm Name" onChange={e => farmManagerStore.farm.name = e.target.value} />
-                        <input placeholder="Crop Grown" onChange={e => farmManagerStore.farm.crop = e.target.value} />
-                        <input placeholder="Acreage" type="number" onChange={e => farmManagerStore.farm.acreage = parseFloat(e.target.value)} />
-                        <button onClick={() => farmManagerStore.showMap = true}>Set Coordinates</button>
-                        <button onClick={() => farmManagerStore.handleSubmit()}>Save Farm</button>
+  render() {
+    return (
+      <Box p={3}>
+        {farmManagerStore.step === "Farms" && (
+          <Box>
+            <Typography variant="h4" gutterBottom>My Farms</Typography>
+            {farmManagerStore.farms.length > 0 ? (
+              <Grid container spacing={3}>
+                {farmManagerStore.farms.map(farm => {
+                  const center = this.getCenter(farm.coordinates);
+                  const mapsUrl = `https://www.google.com/maps?q=${center.lat},${center.lng}`;
+                  return (
+                    <Grid container spacing={2} key={farm.id}>
+                      <Card elevation={3}>
+                        <CardContent>
+                          <Typography variant="h6">{farm.name}</Typography>
+                          <Typography variant="body2">{farm.crop}, {farm.acreage} acres</Typography>
+                          <Box mt={2}>
+                            <MapContainer
+                              center={[farm.coordinates[0].lat, farm.coordinates[0].lng]}
+                              zoom={17}
+                              style={{ height: '200px', width: '100%' }}
+                            >
+                              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                              <Polygon positions={farm.coordinates.map(p => [p.lat, p.lng])} />
+                            </MapContainer>
+                          </Box>
+                          <Box mt={1}>
+                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                              📍 View Location on Google Maps
+                            </a>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            ) : (
+              <Typography>No farms found. Click add</Typography>
+            )}
+            <Box mt={3}>
+              <Button variant="contained" onClick={() => farmManagerStore.setStep("AddFarm")}>Add Farm</Button>
+              <Button variant="outlined" sx={{ ml: 2 }} onClick={() => farmManagerStore.setStep("AddHarvest")}>Add Harvest</Button>
+            </Box>
+          </Box>
+        )}
 
-                        {farmManagerStore.showMap && (
-                            <FarmMap
-                                onClose={() => farmManagerStore.showMap = false}
-                                onSave={(polygon: Coordinates[]) => {
-                                    farmManagerStore.farm.coordinates = polygon;
-                                    farmManagerStore.showMap = false;
-                                }}
-                            />
-                        )}
-                    </div>
-                )}
+        {farmManagerStore.step === "AddFarm" && (
+          <Box mt={3}>
+            <Typography variant="h5" gutterBottom>Add New Farm</Typography>
+            <TextField fullWidth label="Farm Name" margin="normal" onChange={e => farmManagerStore.farm.name = e.target.value} />
+            <TextField fullWidth label="Crop Grown" margin="normal" onChange={e => farmManagerStore.farm.crop = e.target.value} />
+            <TextField fullWidth label="Acreage" type="number" margin="normal" onChange={e => farmManagerStore.farm.acreage = parseFloat(e.target.value)} />
+            <Box mt={2}>
+              <Button variant="contained" onClick={() => farmManagerStore.setStep("Farms")}>Cancel</Button>
+              <Button variant="outlined" onClick={() => farmManagerStore.showMap = true}>Set Coordinates</Button>
+              <Button variant="contained" sx={{ ml: 2 }} onClick={() => farmManagerStore.handleSubmit()}>Save Farm</Button>
+            </Box>
 
-                {farmManagerStore.step === "AddHarvest" && (
-                    <div>
-                        <h3>Add Harvest</h3>
-                        <select onChange={e => farmManagerStore.harvest.farmId = e.target.value}>
-                            {farmManagerStore.farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                        </select>
-                        <input type="number" placeholder="Yield (kg)" onChange={e => farmManagerStore.harvest.yield = parseFloat(e.target.value)} />
-                        <input placeholder="Crop" onChange={e => farmManagerStore.harvest.crop = e.target.value} />
-                        <input
-                            type="date"
-                            value={farmManagerStore.harvest.date}
-                            onChange={(e) => farmManagerStore.harvest.date = e.target.value}
-                            placeholder="Harvest Date"
-                        />
-                        <button onClick={() => farmManagerStore.postHarvest()}>Save Harvest</button>
-                    </div>
-                )}
-            </div>
-        );
-    }
+            {farmManagerStore.showMap && (
+              <FarmMap
+                onClose={() => farmManagerStore.showMap = false}
+                onSave={(polygon: Coordinates[]) => {
+                  farmManagerStore.farm.coordinates = polygon;
+                  farmManagerStore.showMap = false;
+                }}
+              />
+            )}
+          </Box>
+        )}
 
-    private getCenter(coords: Coordinates[]): { lat: number; lng: number } {
-        const latSum = coords.reduce((sum, p) => sum + p.lat, 0);
-        const lngSum = coords.reduce((sum, p) => sum + p.lng, 0);
-        return {
-            lat: latSum / coords.length,
-            lng: lngSum / coords.length
-        };
-    }
+        {farmManagerStore.step === "AddHarvest" && (
+          <Box mt={3}>
+            <Typography variant="h5" gutterBottom>Add Harvest</Typography>
+            <Select fullWidth defaultValue="" onChange={e => farmManagerStore.harvest.farmId = e.target.value}>
+              {farmManagerStore.farms.map(f => (
+                <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
+              ))}
+            </Select>
+            <TextField fullWidth label="Yield (kg)" type="number" margin="normal" onChange={e => farmManagerStore.harvest.yield = parseFloat(e.target.value)} />
+            <TextField fullWidth label="Crop" margin="normal" onChange={e => farmManagerStore.harvest.crop = e.target.value} />
+            <TextField fullWidth label="Harvest Date" type="date" margin="normal" InputLabelProps={{ shrink: true }} value={farmManagerStore.harvest.date} onChange={e => farmManagerStore.harvest.date = e.target.value} />
+            <Box mt={2}>
+              <Button variant="contained" onClick={() => farmManagerStore.postHarvest()}>Save Harvest</Button>
+            </Box>
+          </Box>
+        )}
+      </Box>
+    );
+  }
 }
 
 export default FarmManager;
