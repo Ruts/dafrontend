@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/dist',
   plugins: [react({
       babel: {
         plugins: [
@@ -12,6 +13,6 @@ export default defineConfig({
       },
     })],
    build: {
-    outDir: 'build' // optional: rename to match Azure expectations
+    outDir: 'dist' // optional: rename to match Azure expectations
   }
 })
