@@ -1,5 +1,7 @@
 # 🌱 Digital Agronomist Frontend
 
+Available at: https://blue-ground-0d23b180f.1.azurestaticapps.net
+
 A React + TypeScript + Vite application for managing farms, analyzing crop data, and interacting with an AI-powered backend.
 This frontend integrates authentication, farm management, harvest tracking, dashboards, and interactive farm mapping with Leaflet.js.
 
