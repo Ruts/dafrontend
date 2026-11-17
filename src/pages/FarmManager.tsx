@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { MapContainer, Polygon, TileLayer } from 'react-leaflet';
+import { CircleMarker, MapContainer, Polygon, TileLayer } from 'react-leaflet';
 
 import FarmMap from './FarmMap';
 import { farmManagerStore } from '../stores/FarmManagerStore';
@@ -31,6 +31,8 @@ export interface FarmForm {
     crop: string;
     acreage: number;
     coordinates: Coordinates[]; // polygon
+    latitude?: number | null;
+    longitude?: number | null;
 };
 
 export interface Harvest {
@@ -61,6 +63,7 @@ class FarmManager extends React.Component<{ token: string }> {
   }
 
   getCenter(coords: Coordinates[]) {
+    if (coords.length === 0) return null;
     const latSum = coords.reduce((sum, p) => sum + p.lat, 0);
     const lngSum = coords.reduce((sum, p) => sum + p.lng, 0);
     return {
@@ -78,22 +81,27 @@ class FarmManager extends React.Component<{ token: string }> {
             {farmManagerStore.farms.length > 0 ? (
               <Grid container spacing={3}>
                 {farmManagerStore.farms.map(farm => {
-                  const center = this.getCenter(farm.coordinates);
-                  const mapsUrl = `https://www.google.com/maps?q=${center.lat},${center.lng}`;
+                  const center = farm.latitude != null && farm.longitude != null
+                    ? { lat: farm.latitude, lng: farm.longitude }
+                    : this.getCenter(farm.coordinates);
+                  const mapsUrl = center ? `https://www.google.com/maps?q=${center.lat},${center.lng}` : '';
                   return (
                     <Grid container spacing={2} key={farm.id}>
                       <Card elevation={3}>
                         <CardContent>
                           <Typography variant="h6">{farm.name}</Typography>
                           <Typography variant="body2">{farm.crop}, {farm.acreage} acres</Typography>
+                          {center ? <>
                           <Box mt={2}>
                             <MapContainer
-                              center={[farm.coordinates[0].lat, farm.coordinates[0].lng]}
+                              center={[center.lat, center.lng]}
                               zoom={17}
                               style={{ height: '200px', width: '100%' }}
                             >
                               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                              <Polygon positions={farm.coordinates.map(p => [p.lat, p.lng])} />
+                              {farm.coordinates.length >= 3
+                                ? <Polygon positions={farm.coordinates.map(p => [p.lat, p.lng])} />
+                                : <CircleMarker center={[center.lat, center.lng]} radius={6} />}
                             </MapContainer>
                           </Box>
                           <Box mt={1}>
@@ -101,6 +109,9 @@ class FarmManager extends React.Component<{ token: string }> {
                               📍 View Location on Google Maps
                             </a>
                           </Box>
+                          </> : (
+                            <Typography variant="body2">No location set. Add a pin in Profile &amp; Weather.</Typography>
+                          )}
                         </CardContent>
                       </Card>
                     </Grid>

@@ -6,6 +6,8 @@ import Chat from './Chat';
 import DroneSim from './DroneSim';
 import FarmManager from './FarmManager';
 import Reports from './Reports';
+import Profile from './Profile';
+import StaffInbox from './StaffInbox';
 import Sidebar from '../components/Sidebar';
 import { dashboardStore } from '../stores/DashboardStore';
 import { jwtDecode } from 'jwt-decode';
@@ -29,11 +31,14 @@ class Dashboard extends React.Component<DashboardProps> {
         return (
             <div className="dashboard">
                 <Sidebar
+                    token={this.props.token}
                     user={this.user}
                     setFarm={() => dashboardStore.setStep("FarmManager")}
                     setReport={() => dashboardStore.setStep("Reports")}
                     setChat={() => dashboardStore.setStep("Chat")}
                     setDroneSim={() => dashboardStore.setStep("DroneSim")}
+                    setProfile={() => dashboardStore.setStep("Profile")}
+                    setInbox={() => dashboardStore.setStep("Inbox")}
                 />
                 <div className="dashboard">
                     <main className="main-content">
@@ -41,6 +46,8 @@ class Dashboard extends React.Component<DashboardProps> {
                         {dashboardStore.step === "Reports" && (<Reports token={this.props.token} />)}
                         {dashboardStore.step === "Chat" && (<Chat token={this.props.token} />)}
                         {dashboardStore.step === "DroneSim" && (<DroneSim token={this.props.token} />)}
+                        {dashboardStore.step === "Profile" && (<Profile token={this.props.token} />)}
+                        {dashboardStore.step === "Inbox" && (<StaffInbox token={this.props.token} />)}
                     </main>
                 </div>
             </div>

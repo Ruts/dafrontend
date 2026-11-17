@@ -41,14 +41,18 @@ const Chat: React.FC<ChatProps> = observer(({ token }) => {
           </Typography>
         );
       } else {
-        const bolded = line.replace(/\*(.*?)\*/g, (_, match) => `<strong>${match}</strong>`);
         return (
           <Typography
             key={index}
             variant="body2"
             sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}
-            dangerouslySetInnerHTML={{ __html: bolded }}
-          />
+          >
+            {line.split(/(\*[^*]+\*)/g).map((part, i) =>
+              part.startsWith('*') && part.endsWith('*')
+                ? <strong key={i}>{part.slice(1, -1)}</strong>
+                : part
+            )}
+          </Typography>
         );
       }
     });

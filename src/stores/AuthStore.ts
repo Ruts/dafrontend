@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
-type AuthStep = "signup" | "verify" | "login";
+type AuthStep = "verify" | "login";
 
 export class AuthStore {
     // Observables (State)
@@ -44,70 +44,51 @@ export class AuthStore {
     }
 
     // Async Actions
-    async createAccount() {
-        this.setError('');
-        this.isLoading = true;
-        const res = await fetch(this.url + '/create-account', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: this.phone, name: this.name }),
-        });
-
-        const data = await res.json();
-
-        runInAction(() => {
-            if (data.status === 'code_sent') {
-                this.setStep('verify');
-            } else {
-                this.setError("Unable to create account");
-            }
-            this.isLoading = false;
-        })
-    }
-
     async login() {
         this.setError('');
         this.isLoading = true;
-        const res = await fetch(this.url + '/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: this.phone }),
-        });
-
-        const data = await res.json();
-
-        runInAction(() => {
-            if (data.status === 'verify') {
+        try {
+            const data = await this.request('/login', { phone: this.phone });
+            runInAction(() => {
+                if (data.status !== 'verify') throw new Error('Unable to request a code.');
                 this.setStep('verify');
-            } else {
-                this.setError("Account does not exist. Kindly create account.");
-            }
-            this.isLoading = false;
-        })
+            });
+        } catch (error) {
+            runInAction(() => this.setError(error instanceof Error ? error.message : 'Login failed.'));
+        } finally {
+            runInAction(() => { this.isLoading = false; });
+        }
     }
 
     async verifyCode(setToken: (token: string) => void, navigate: (path: string) => void) {
         this.setError('');
         this.isLoading = true;
-        const res = await fetch(this.url + '/verify-code', {
+        try {
+            const data = await this.request('/verify-code', { phone: this.phone, code: this.code });
+            if (data.status !== 'verified' || typeof data.token !== 'string') {
+                throw new Error('Verification failed.');
+            }
+            localStorage.setItem('jwt', data.token);
+            setToken(data.token);
+            navigate('/dashboard');
+        } catch (error) {
+            runInAction(() => this.setError(error instanceof Error ? error.message : 'Verification failed.'));
+        } finally {
+            runInAction(() => { this.isLoading = false; });
+        }
+    }
+
+    private async request(path: string, body: object): Promise<{ status: string; token?: string }> {
+        const res = await fetch(this.url + path, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: this.phone, code: this.code }),
+            body: JSON.stringify(body),
         });
         const data = await res.json();
-
-        runInAction(() => {
-        console.log("data", data);
-            if (data.status === 'verified') {
-                setToken(data.token);
-                console.log("data.token", data.token);
-                navigate('/dashboard'); // redirect
-            } else {
-                this.setStep('login');
-                this.setError("Verification failed.");
-            }
-            this.isLoading = false;
-        })
+        if (!res.ok) {
+            throw new Error(typeof data.detail === 'string' ? data.detail : 'Request failed. Please retry.');
+        }
+        return data;
     }
 }
 

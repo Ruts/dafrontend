@@ -5,10 +5,10 @@ class DashboardStore {
         makeAutoObservable(this);
     }
 
-    step: "FarmManager" | "Reports" | "Chat" | "DroneSim" = "FarmManager";
+    step: "FarmManager" | "Reports" | "Chat" | "DroneSim" | "Profile" | "Inbox" = "FarmManager";
     showMap = false;
 
-    setStep(step: "FarmManager" | "Reports" | "Chat" | "DroneSim") {
+    setStep(step: "FarmManager" | "Reports" | "Chat" | "DroneSim" | "Profile" | "Inbox") {
         console.log("this.step", this.step)
         this.step = step;
     }
