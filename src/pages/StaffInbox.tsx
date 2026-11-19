@@ -277,7 +277,8 @@ export default function StaffInbox({ token }: { token: string }) {
                   : item.senderType === 'staff' ? `Staff ${item.staffPhone ?? ''}` : 'Digital Agronomist'}
                 {' | '}{new Date(item.timestamp).toLocaleString()} | {item.status}
               </Typography>
-              {source === 'whatsapp' && item.owner !== conversation?.phone && (
+              {source === 'whatsapp' && /^\+?[1-9]\d{7,14}$/.test(item.owner)
+                && item.owner !== conversation?.phone && (
                 <Button disabled={busy || acting} onClick={() => {
                   setPhone(item.owner);
                   setFilter(item.owner);

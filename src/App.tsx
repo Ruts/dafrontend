@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
+import AdminPortal from './pages/AdminPortal';
 
 const App = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('jwt'));
@@ -25,6 +26,9 @@ const App = () => {
         <Route
           path="/dashboard"
           element={token ? <Dashboard token={token} /> : <Navigate to="/" />}
+        />
+        <Route path="/admin/*"
+          element={token ? <AdminPortal token={token} setToken={setToken} /> : <Navigate to="/" />}
         />
       </Routes>
     </Router>
