@@ -166,10 +166,16 @@ export default function Profile({ token, targetPhone, showWeather = true, initia
           </>}
           {showWeather && <>
           <Typography variant="h5">Weather notifications</Typography>
+          {weather.enabled && weather.farmId && !farms.some(f => f.id === weather.farmId) && <Alert severity="warning">
+            Forecasts are paused because the selected farm is archived. Restore it, select an active farm,
+            or uncheck scheduled forecasts to unsubscribe.
+          </Alert>}
           <Alert severity="info">Select a farm with a location pin. Forecasts are estimates, not guarantees. Powered by Open-Meteo.</Alert>
           <FormControlLabel control={<Checkbox checked={weather.enabled} onChange={e => setWeather({ ...weather, enabled: e.target.checked, consent: e.target.checked })} />} label={staff ? 'The farmer has explicitly consented to scheduled WhatsApp forecasts' : 'I agree to receive scheduled WhatsApp forecasts'} />
           <TextField select label="Forecast farm" value={weather.farmId} onChange={e => setWeather({ ...weather, farmId: e.target.value })}>
             <MenuItem value="">Select a farm</MenuItem>
+            {weather.farmId && !farms.some(f => f.id === weather.farmId) &&
+              <MenuItem value={weather.farmId} disabled>Archived farm - select an active farm</MenuItem>}
             {farms.map(f => <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>)}
           </TextField>
           <TextField select label="Frequency" value={weather.frequency} onChange={e => setWeather({ ...weather, frequency: e.target.value as Weather['frequency'] })}>

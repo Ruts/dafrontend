@@ -24,10 +24,10 @@ export type Station = {
 };
 export type ServiceFarm = FarmForm & { services: string[]; stations: Station[]; droneStations: Station[]; locationName?: string };
 export type Availability = {
-  primaryFarmId: string | null; station: Station | null; services: string[]; farms: ServiceFarm[];
+  primaryFarmId: string | null; station: Station | null; services: string[]; farms: ServiceFarm[]; archivedFarms: FarmForm[];
 };
 type Page = 'farms' | 'profile' | 'reports' | 'chat' | 'services';
-type Person = { name: string; phoneNumber: string; weather: { enabled: boolean } | null };
+type Person = { name: string; phoneNumber: string; weather: { enabled: boolean; farmId: string } | null };
 
 export default function Dashboard({ token }: { token: string }) {
   const navigate = useNavigate();
@@ -120,7 +120,9 @@ export default function Dashboard({ token }: { token: string }) {
               <div><GrassRounded /><span>Registered farms<strong>{data.farms.length}</strong></span></div>
               <div><PlaceOutlined /><span>Your support station<strong>{data.station?.name || 'Not yet assigned'}</strong></span></div>
               <div><ChatBubbleOutlineRounded /><span>{enabled('weather') ? 'Weather notifications' : 'Farm support'}
-                <strong>{enabled('weather') ? (person?.weather?.enabled ? 'Subscribed' : 'Set your preferences') : 'WhatsApp-first'}</strong></span></div>
+                <strong>{enabled('weather') ? (person?.weather?.enabled
+                  ? (data.farms.some(f => f.id === person.weather?.farmId) ? 'Subscribed' : 'Paused - farm archived')
+                  : 'Set your preferences') : 'WhatsApp-first'}</strong></span></div>
             </div>
             {page === 'farms' && <FarmManager token={token} data={data}
               onChanged={() => setRefresh(v => v + 1)} onProfile={farmId => { setEditFarmId(farmId); setPage('profile'); }} />}

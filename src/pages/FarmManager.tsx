@@ -13,6 +13,7 @@ export interface Coordinates { lat: number; lng: number }
 export interface FarmForm {
   id: string; name: string; crop: string; acreage: number; coordinates: Coordinates[];
   latitude?: number | null; longitude?: number | null; locationName?: string;
+  active?: boolean; revision?: string;
 }
 export interface Harvest {
   id: string; farmId: string; owner: string; date: string; yield: number; crop: string;
@@ -38,7 +39,11 @@ export default function FarmManager({ token, data, onChanged, onProfile }: {
   const [harvest, setHarvest] = useState({ farmId: '', crop: '', date: '', yield: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [archiveTarget, setArchiveTarget] = useState<FarmForm | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const reportFarms = data.farms.filter(f => f.services.includes('reports'));
+  const primaryNeedsReplacement = archiveTarget?.active !== false &&
+    archiveTarget?.id === data.primaryFarmId && data.farms.length > 1;
 
   async function save() {
     setBusy(true); setError('');
@@ -60,6 +65,18 @@ export default function FarmManager({ token, data, onChanged, onProfile }: {
       const person = await request<{ phoneNumber: string }>(token, '/me');
       await request(token, `/profiles/${encodeURIComponent(person.phoneNumber)}/primary-farm`, 'PUT', { farmId });
       onChanged();
+    } catch (error) { setError(message(error)); } finally { setBusy(false); }
+  }
+  async function changeStatus() {
+    if (!archiveTarget) return;
+    if (!archiveTarget.revision) { setError('Farm revision is missing. Refresh your records and retry.'); return; }
+    setBusy(true); setError('');
+    try {
+      const person = await request<{ phoneNumber: string }>(token, '/me');
+      await request(token, `/profiles/${encodeURIComponent(person.phoneNumber)}/farms/${archiveTarget.id}/status`, 'PUT', {
+        active: archiveTarget.active === false, revision: archiveTarget.revision,
+      });
+      setArchiveTarget(null); onChanged();
     } catch (error) { setError(message(error)); } finally { setBusy(false); }
   }
 
@@ -109,15 +126,46 @@ export default function FarmManager({ token, data, onChanged, onProfile }: {
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Button variant="outlined" onClick={() => onProfile(farm.id)} startIcon={<GrassRounded />}>Edit farm records</Button>
               {data.primaryFarmId !== farm.id && <Button disabled={busy} onClick={() => void primary(farm.id)}>Make primary</Button>}
+              <Button color="error" disabled={busy} onClick={() => { setError(''); setArchiveTarget(farm); }}>Archive farm</Button>
             </Stack>
           </div>
         </article>;
       })}
     </div>
+    {data.archivedFarms.length > 0 && <>
+      <Button sx={{ alignSelf: 'flex-start' }} aria-expanded={showArchived} onClick={() => setShowArchived(v => !v)}>
+        {showArchived ? 'Hide' : 'View'} archived farms ({data.archivedFarms.length})
+      </Button>
+      {showArchived && <Stack spacing={2} aria-label="Archived farms">
+        {data.archivedFarms.map(farm => <Stack key={farm.id} className="da-farm-card" p={2.5}
+          direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1}>
+          <div><Typography component="h3" variant="h6">{farm.name}</Typography>
+            <Typography variant="body2" color="text.secondary">{farm.crop} | {farm.acreage} acres | Archived</Typography></div>
+          <Button disabled={busy} onClick={() => { setError(''); setArchiveTarget(farm); }}>Restore farm</Button>
+        </Stack>)}
+      </Stack>}
+    </>}
     <Typography variant="body2" color="text.secondary">
       Your primary farm determines your support station unless an administrator has assigned one.
       Physical services always depend on each farm's own location.
     </Typography>
+    <Dialog open={archiveTarget !== null} onClose={() => { if (!busy) setArchiveTarget(null); }} fullWidth maxWidth="sm">
+      <DialogTitle>{archiveTarget?.active === false ? 'Restore farm?' : 'Archive farm?'}</DialogTitle>
+      <DialogContent>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Typography mb={2}>{archiveTarget?.name}</Typography>
+        <Typography>Archiving hides the farm from active management, station coverage and WhatsApp farm selection.
+          Records and chat history are retained. Scheduled forecasts for this farm pause while archived and resume
+          when restored if the subscription is still enabled.</Typography>
+        {primaryNeedsReplacement && <Alert severity="warning" sx={{ mt: 2 }}>
+          Choose another primary farm using Make primary before archiving this one.
+        </Alert>}
+      </DialogContent>
+      <DialogActions><Button disabled={busy} onClick={() => setArchiveTarget(null)}>Cancel</Button>
+        <Button variant="contained" disabled={busy || primaryNeedsReplacement} onClick={() => void changeStatus()}>
+          {archiveTarget?.active === false ? 'Restore farm' : 'Archive farm'}
+        </Button></DialogActions>
+    </Dialog>
     <Dialog open={dialog !== null} onClose={() => { if (!busy) setDialog(null); }} fullWidth maxWidth="sm">
       <DialogTitle>{dialog === 'farm' ? 'Add a farm' : 'Record a harvest'}</DialogTitle>
       <DialogContent>
