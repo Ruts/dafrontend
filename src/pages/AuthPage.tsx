@@ -12,17 +12,18 @@ import {
 
 import { authStore } from '../stores/AuthStore';
 import { observer } from 'mobx-react-lite';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useWhatsAppService } from '../hooks/useWhatsAppService';
 
 const AuthPage = observer(({ setToken }: { setToken: (token: string) => void }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mode = searchParams.get('mode') === 'admin' ? 'admin' : 'farmer';
 
   const handleLogin = () => authStore.login();
   const handleVerifyCode = () => authStore.verifyCode(setToken, navigate);
-  const [whatsapp, setWhatsapp] = useState('');
-  const [setupError, setSetupError] = useState('');
-  const [mode, setMode] = useState<'farmer' | 'admin'>('farmer');
+  const { whatsapp, setupError } = useWhatsAppService();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -47,31 +48,14 @@ const AuthPage = observer(({ setToken }: { setToken: (token: string) => void }) 
     } finally { setAdminBusy(false); }
   }
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/service-info`);
-        if (!response.ok) throw new Error('WhatsApp service details are unavailable.');
-        const data = await response.json();
-        if (typeof data.whatsappNumber !== 'string' || !/^[1-9]\d{7,14}$/.test(data.whatsappNumber)) {
-          throw new Error('WhatsApp service number is not configured.');
-        }
-        if (active) setWhatsapp(data.whatsappNumber);
-      } catch (error) {
-        if (active) setSetupError(error instanceof Error ? error.message : 'Unable to load WhatsApp details.');
-      }
-    }
-    void load();
-    return () => { active = false; };
-  }, []);
-
   return (
     <Grid container justifyContent="center" alignItems="center" minHeight="100vh" width="100%">
       <Grid container spacing={2}>
         <Paper elevation={3} sx={{ padding: 4, width: 'min(900px, calc(100vw - 96px))' }}>
+          <Button component={Link} to="/" sx={{ mb: 2 }}>Back to Digital Agronomist</Button>
           <Typography variant="h4" gutterBottom>Digital Agronomist</Typography>
-          <Tabs value={mode} onChange={(_, value: 'farmer' | 'admin') => setMode(value)} sx={{ mb: 3 }}>
+          <Tabs value={mode} onChange={(_, value: 'farmer' | 'admin') =>
+            setSearchParams(value === 'admin' ? { mode: 'admin' } : {})} sx={{ mb: 3 }}>
             <Tab value="farmer" label="Farmer login" />
             <Tab value="admin" label="Admin / staff login" />
           </Tabs>

@@ -400,7 +400,7 @@ export default function AdminPortal({ token, setToken }: {
     return () => controller.abort();
   }, [token]);
   function logout() {
-    localStorage.removeItem('jwt'); setToken(null); navigate('/');
+    localStorage.removeItem('jwt'); setToken(null); navigate('/login?mode=admin');
   }
   function changed(session: Session) {
     localStorage.setItem('jwt', session.token);

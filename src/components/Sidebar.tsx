@@ -62,7 +62,7 @@ const Sidebar = ({
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     window.dispatchEvent(new Event('storage'));
-    navigate('/');
+    navigate('/login');
   };
 
   return (
