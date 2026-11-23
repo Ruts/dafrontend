@@ -1,36 +1,54 @@
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+.da-auth { display: flex; flex-direction: column; }
+.da-auth .da-header { flex-shrink: 0; }
+.da-auth-back { display: inline-flex; gap: 8px; align-items: center; font-size: .82rem; font-weight: 600; }
+.da-auth-back svg { width: 17px; }
+.da-auth-main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 95px; align-items: center; padding-block: 62px; }
+.da-auth-story h1 { margin-top: 21px; font-size: clamp(2.6rem, 3.8vw, 3.9rem); }
+.da-auth-story h1 span { color: #538052; }
+.da-auth-story > p:not(.da-eyebrow) { color: var(--da-muted); margin-top: 25px; max-width: 425px; font-size: 1rem; }
+.da-auth-highlights { padding: 0; margin: 30px 0 0; list-style: none; }
+.da-auth-highlights li { display: flex; align-items: center; gap: 13px; margin-top: 16px; font-size: .85rem; color: #465f4d; }
+.da-auth-highlights svg { color: #648451; width: 20px; flex-shrink: 0; }
+.da-auth-brand-note { display: flex; align-items: center; gap: 17px; padding-top: 29px; margin-top: 35px; border-top: 1px solid #dfe5d6; font-size: .9rem; font-weight: 650; }
+.da-auth-brand-note small { display: block; font-size: .71rem; font-weight: 400; color: var(--da-muted); margin-top: 4px; }
+.da-auth-card { min-width: 0; border: 1px solid #dfe5d6; border-radius: 20px; padding: 34px; background: #fffefa; box-shadow: 0 15px 50px #23492d09; scroll-margin-top: 24px; }
+.da-auth-card-icon { display: inline-flex; align-items: center; justify-content: center; background: #edf2e4; border: 1px solid #e1e8d9; color: var(--da-green); padding: 11px; border-radius: 12px; margin-bottom: 20px; }
+.da-auth-card > .da-eyebrow { font-size: .65rem; }
+.da-auth .da-auth-card h2 { font-size: 1.65rem; margin-top: 9px; font-weight: 650; line-height: 1.25; letter-spacing: -.035em; }
+.da-auth-card-intro { color: var(--da-muted); margin-top: 9px !important; font-size: .85rem; }
+.da-auth .da-auth-tabs { background: #f0f3e9; padding: 4px; min-height: 54px; margin-block: 25px; border: 1px solid #e4e9dc; border-radius: 10px; }
+.da-auth .da-auth-tabs .Mui-selected { background: #fffefa; border-radius: 7px; box-shadow: 0 2px 6px #243a2310; }
+.da-auth .da-auth-tabs .MuiTabs-indicator { display: none; }
+.da-auth .MuiTab-root.Mui-focusVisible { outline: 2px solid #98721a; outline-offset: -3px; border-radius: 7px; }
+.da-auth .MuiButton-root.Mui-focusVisible { outline: 3px solid #98721a; outline-offset: 3px; }
+.da-auth .da-auth-whatsapp { margin-top: 12px; padding-inline: 0; font-size: .78rem; min-height: 40px; }
+.da-auth .MuiInputBase-input { margin-bottom: 0; }
+.da-auth-help { display: flex; gap: 7px; align-items: start; border-top: 1px solid #e4e8dd; padding-top: 20px; margin-top: 24px !important; color: var(--da-muted); font-size: .68rem; }
+.da-auth-help svg { width: 14px; height: 18px; flex-shrink: 0; }
+.da-auth-footer { border-top: 1px solid #dfe5d6; padding-block: 23px; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: .7rem; color: var(--da-muted); }
+.da-auth-footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
+.da-auth-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 1050px) {
+  .da-auth-main { gap: 40px; }
+  .da-auth-card { padding: 28px; }
+  .da-auth .da-auth-tabs .MuiTab-root { font-size: .74rem; padding-inline: 6px; }
 }
-.auth-box {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+@media (max-width: 760px) {
+  .da-auth-main { grid-template-columns: 1fr; max-width: 520px; gap: 30px; padding-block: 35px; }
+  .da-auth-story h1 { font-size: 2rem; margin-top: 13px; }
+  .da-auth-story > p:not(.da-eyebrow) { display: none; }
+  .da-auth-highlights, .da-auth-brand-note { display: none; }
+  .da-auth-card { padding: 27px 24px; border-radius: 15px; }
+  .da-auth-back { max-width: 135px; text-align: right; line-height: 1.4; font-size: .7rem; }
+  .da-auth-back svg { flex-shrink: 0; }
+  .da-auth-footer { justify-content: center; text-align: center; gap: 10px; font-size: .65rem; }
+  .da-auth-footer nav { justify-content: center; gap: 16px; }
 }
-.auth-box input {
-  padding: 0.5rem;
-  font-size: 1rem;
-}
-.auth-box button {
-  padding: 0.5rem;
-  background: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.leaflet-control-geocoder-form {
-  background-color: white !important;
-  opacity: 1 !important;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  padding: 6px;
-  border-radius: 4px;
-  z-index: 1000;
+@media (max-width: 390px) {
+  .da-auth-card { padding: 24px 18px; }
+  .da-auth .da-auth-card h2 { font-size: 1.45rem; }
+  .da-auth .da-auth-whatsapp { font-size: .68rem; }
+  .da-auth .da-auth-whatsapp .MuiButton-startIcon { margin-right: 5px; }
+  .da-auth .da-auth-whatsapp .MuiButton-endIcon { margin-left: 5px; }
+  .da-auth-back { max-width: 120px; font-size: .65rem; }
 }

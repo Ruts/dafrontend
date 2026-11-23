@@ -22,7 +22,7 @@ const features = [
 
 const questions = [
   { question: 'Do I need to download another app?', answer: 'No separate mobile app is needed. Start the conversation in WhatsApp and use your browser when you want to manage your farm details in the portal.' },
-  { question: 'How do I create an account?', answer: 'Send a message to Digital Agronomist on WhatsApp. The guided conversation asks for consent and helps you add your profile and farm information. WhatsApp activation and live delivery are currently being verified.' },
+  { question: 'How do I create an account?', answer: 'Send a message to Digital Agronomist on WhatsApp. The guided conversation asks for consent and helps you add your profile and farm information. Our Meta app is published; live WhatsApp delivery checks are still in progress.' },
   { question: 'Can a photo tell me exactly what is wrong with my crop?', answer: 'No. A photo and your description can help explore possible causes, but AI advice can be wrong and cannot confirm a diagnosis. Check consequential decisions with a qualified local agronomist and follow approved product labels.' },
   { question: 'Can I change or stop weather messages?', answer: 'Yes. Choose daily, every other day or weekly in your preferences. Send STOP in WhatsApp to disable weather notifications. Stopping notifications does not delete your account.' },
   { question: 'How do I sign in to the farmer portal?', answer: 'After registering on WhatsApp, send LOGIN to get a portal code. Open Farmer login, enter your phone number including the country code, and verify your code. Staff use a separate email and password sign-in.' },
@@ -73,7 +73,7 @@ export default function LandingPage() {
             <p className="da-hero-note"><CheckRounded aria-hidden="true" /> No separate app to install. A portal when you need it.</p>
             <div className="da-launch-note" role="note">
               <strong>Early access</strong>
-              <span>WhatsApp replies and scheduled delivery are being verified. You can explore the portal and contact us for help getting started.</span>
+              <span>Our Meta app is published. Live WhatsApp delivery checks are still in progress. Explore the portal or contact us for help getting started.</span>
             </div>
             {setupError && <p className="da-service-error" role="alert">{setupError} Contact <a href="mailto:info@kromsystems.com">info@kromsystems.com</a>.</p>}
           </div>
@@ -181,7 +181,7 @@ export default function LandingPage() {
           <h2 id="cta-title">The next question about your farm?<br />Start with a conversation.</h2>
           <p>Explore Digital Agronomist, your farming companion by KROM.</p>
           <WhatsAppLink secondary />
-          <span className="da-final-note">Early access. WhatsApp activation and delivery verification in progress.</span>
+          <span className="da-final-note">Meta app published. Live WhatsApp delivery verification in progress.</span>
         </section>
       </main>
 
