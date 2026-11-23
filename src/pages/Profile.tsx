@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Checkbox, FormControlLabel, MenuItem, Stack, TextField, Typography,
 } from '@mui/material';
@@ -49,7 +49,9 @@ async function api<T>(path: string, token: string, method = 'GET', body?: object
   return result;
 }
 
-export default function Profile({ token }: { token: string }) {
+export default function Profile({ token, targetPhone, showWeather = true, initialFarmId }: {
+  token: string; targetPhone?: string; showWeather?: boolean; initialFarmId?: string;
+}) {
   const [profile, setProfile] = useState<Farmer | null>(null);
   const [staff, setStaff] = useState(false);
   const [lookup, setLookup] = useState('');
@@ -60,26 +62,26 @@ export default function Profile({ token }: { token: string }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  function display(person: Farmer, records: Farm[]) {
+  const display = useCallback((person: Farmer, records: Farm[]) => {
     setProfile(person);
     setFarms(records);
-    setFarm(records[0] ?? null);
+    setFarm(records.find(f => f.id === initialFarmId) ?? records[0] ?? null);
     const saved = person.weather;
     setWeather(saved ? {
       enabled: saved.enabled, consent: saved.consent, farmId: saved.farmId,
       frequency: saved.frequency, time: saved.time, timezone: saved.timezone, weekday: saved.weekday,
     } : { ...initialWeather, farmId: records[0]?.id ?? '' });
-  }
+  }, [initialFarmId]);
 
   useEffect(() => {
     let active = true;
     setBusy(true);
     async function load() {
       try {
-        const person = await api<Farmer>('/me', token);
+        const person = await api<Farmer>(targetPhone ? `/profiles/${encodeURIComponent(targetPhone)}` : '/me', token);
         const records = await api<Farm[]>(`/profiles/${encodeURIComponent(person.phoneNumber)}/farms`, token);
         if (active) {
-          setStaff(person.isStaff);
+          setStaff(!targetPhone && person.isStaff);
           setLookup(person.phoneNumber);
           display(person, records);
         }
@@ -91,7 +93,7 @@ export default function Profile({ token }: { token: string }) {
     }
     void load();
     return () => { active = false; };
-  }, [token]);
+  }, [token, targetPhone, display]);
 
   async function perform(action: () => Promise<void>) {
     setBusy(true);
@@ -109,7 +111,7 @@ export default function Profile({ token }: { token: string }) {
   const path = `/profiles/${encodeURIComponent(profile?.phoneNumber ?? '')}`;
   return (
     <Box p={3} maxWidth={800}>
-      <Typography variant="h4" gutterBottom>Profile, farms and weather</Typography>
+      <Typography variant="h5" component="h2" gutterBottom>{showWeather ? 'Profile, farms and weather' : 'Profile and farms'}</Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {notice && <Alert severity="success" sx={{ mb: 2 }}>{notice}</Alert>}
       {staff && (
@@ -137,7 +139,7 @@ export default function Profile({ token }: { token: string }) {
             setNotice('Profile saved.');
           })}>Save profile</Button>
           <Typography variant="h5">Farm records</Typography>
-          <Typography variant="body2">Add another farm by messaging ADD FARM on WhatsApp, or through Farm Management.</Typography>
+          <Typography variant="body2">Add another farm by messaging ADD FARM on WhatsApp, or through My farms.</Typography>
           {farms.length > 0 && (
             <TextField select label="Farm to edit" value={farm?.id ?? ''} onChange={e => setFarm(farms.find(f => f.id === e.target.value) ?? null)}>
               {farms.map(f => <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>)}
@@ -162,6 +164,7 @@ export default function Profile({ token }: { token: string }) {
               setNotice('Farm saved. New WhatsApp questions use these details.');
             })}>Save farm</Button>
           </>}
+          {showWeather && <>
           <Typography variant="h5">Weather notifications</Typography>
           <Alert severity="info">Select a farm with a location pin. Forecasts are estimates, not guarantees. Powered by Open-Meteo.</Alert>
           <FormControlLabel control={<Checkbox checked={weather.enabled} onChange={e => setWeather({ ...weather, enabled: e.target.checked, consent: e.target.checked })} />} label={staff ? 'The farmer has explicitly consented to scheduled WhatsApp forecasts' : 'I agree to receive scheduled WhatsApp forecasts'} />
@@ -185,6 +188,7 @@ export default function Profile({ token }: { token: string }) {
             setNotice(saved.enabled ? `Weather enabled. Next scheduled: ${saved.nextDueAt}` : 'Weather notifications stopped.');
           })}>Save weather preferences</Button>
           <Typography variant="body2">Change preferences here or send WEATHER on WhatsApp. Send STOP to unsubscribe.</Typography>
+          </>}
         </Stack>
       )}
     </Box>

@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   CircularProgress,
   Divider,
@@ -8,18 +9,26 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import React, { useEffect } from 'react';
-
-import { observer } from 'mobx-react';
-import { questionStore } from '../stores/QuestionStore';
+import React, { useEffect, useState } from 'react';
+import { request, message } from '../api';
 
 interface ChatProps {
   token: string;
 }
 
-const Chat: React.FC<ChatProps> = observer(({ token }) => {
+type Message = { id: string; role: string; message: string; timestamp: string };
+
+const Chat: React.FC<ChatProps> = ({ token }) => {
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   useEffect(() => {
-    questionStore.fetchChatHistory(token);
+    const controller = new AbortController();
+    setLoading(true); setError('');
+    request<Message[]>(token, '/chat-history', 'GET', undefined, controller.signal)
+      .then(setChatHistory).catch(error => { if (!controller.signal.aborted) setError(message(error)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [token]);
 
   const formatTimestamp = (ts: string) => new Date(ts).toLocaleString();
@@ -60,9 +69,13 @@ const Chat: React.FC<ChatProps> = observer(({ token }) => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" gutterBottom>💬 Chat History</Typography>
+      <Typography variant="h5" component="h2" gutterBottom>Chat history</Typography>
+      {error && <Alert severity="error">{error}</Alert>}
+      {!loading && !error && !chatHistory.length && <Alert severity="info">
+        No conversations yet. Ask a question or share a crop photo on WhatsApp.
+      </Alert>}
 
-      {questionStore.loading ? (
+      {loading ? (
         <Box textAlign="center" mt={4}>
           <CircularProgress />
           <Typography>Loading chat history...</Typography>
@@ -70,7 +83,7 @@ const Chat: React.FC<ChatProps> = observer(({ token }) => {
       ) : (
         <Paper elevation={3} sx={{ maxHeight: 600, overflowY: 'auto', padding: 2 }}>
           <List>
-            {questionStore.chatHistory.map((msg, index) => (
+            {chatHistory.map((msg, index) => (
               <React.Fragment key={msg.id || index}>
                 <ListItem
                   sx={{
@@ -79,6 +92,7 @@ const Chat: React.FC<ChatProps> = observer(({ token }) => {
                   }}
                 >
                   <ListItemText
+                    disableTypography
                     primary={
                       <Box
                         sx={{
@@ -106,7 +120,7 @@ const Chat: React.FC<ChatProps> = observer(({ token }) => {
       )}
     </Box>
   );
-});
+};
 
 export default Chat;
 

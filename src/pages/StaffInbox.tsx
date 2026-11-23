@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, MenuItem, Stack, TextField, Typography,
 } from '@mui/material';
+import { request } from '../api';
 
 type Interaction = {
   id: string;
@@ -53,12 +54,7 @@ export default function StaffInbox({ token }: { token: string }) {
     const controller = new AbortController();
     setConversation(null);
     if (source !== 'whatsapp' || !filter) return () => controller.abort();
-    fetch(`${import.meta.env.VITE_API_BASE}/staff/conversations/${encodeURIComponent(filter)}`, {
-      headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
-    }).then(async response => {
-      if (!response.ok) throw new Error(`Unable to load conversation controls (${response.status}).`);
-      return response.json() as Promise<Conversation>;
-    }).then(value => {
+    request<Conversation>(token, `/staff/conversations/${encodeURIComponent(filter)}`, 'GET', undefined, controller.signal).then(value => {
       if (!controller.signal.aborted) setConversation(value);
     }).catch(cause => {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Unable to load controls.');
@@ -75,13 +71,7 @@ export default function StaffInbox({ token }: { token: string }) {
     setPhoto(null);
     const query = new URLSearchParams({ source, limit: '50' });
     if (filter) query.set('phone', filter);
-    fetch(`${import.meta.env.VITE_API_BASE}/staff/interactions?${query}`, {
-      headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
-    }).then(async response => {
-      if (!response.ok) throw new Error(response.status === 403
-        ? 'Access is restricted to server-authorised staff.' : `Unable to load messages (${response.status}).`);
-      return response.json() as Promise<Page>;
-    }).then(page => {
+    request<Page>(token, `/staff/interactions?${query}`, 'GET', undefined, controller.signal).then(page => {
       if (!controller.signal.aborted) {
         setItems(page.items);
         setCursor(page.cursor);

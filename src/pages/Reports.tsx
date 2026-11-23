@@ -1,230 +1,77 @@
-import * as React from "react";
-
+import { useEffect, useState } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import type { Environment, Harvest } from "./FarmManager";
+  Alert, Box, Card, CardContent, LinearProgress, MenuItem, Stack, Table,
+  TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography,
+} from '@mui/material';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import type { FarmForm, Harvest, Environment } from './FarmManager';
+import { request, message } from '../api';
 
-import { farmManagerStore } from "../stores/FarmManagerStore";
-import { farmReportStore } from "../stores/FarmReportStore";
-import { observer } from "mobx-react";
-import { toJS } from "mobx";
-
-interface ReportsProps {
-  token: string;
-}
-
-@observer
-class Reports extends React.Component<ReportsProps> {
-  componentDidMount() {
-    farmReportStore.fetchReportData(this.props.token);
-  }
-
-  render() {
-    return (
-      <Box p={3}>
-        <Typography variant="h4" gutterBottom>
-          📊 Farm Performance Report
-        </Typography>
-
-        <Grid container spacing={2} mb={3}>
-          <Grid container spacing={2}>
-            <FormControl fullWidth>
-              <InputLabel>Farm</InputLabel>
-              <Select
-                value={farmReportStore.selectedFarmId}
-                label="Farm"
-                onChange={(e) => farmReportStore.setFarmFilter(e.target.value)}
-              >
-                <MenuItem value="">All Farms</MenuItem>
-                {farmManagerStore.farms.map((farm) => (
-                  <MenuItem key={farm.id} value={farm.id}>
-                    {farm.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid container spacing={2}>
-            <FormControl fullWidth>
-              <InputLabel>Crop</InputLabel>
-              <Select
-                value={farmReportStore.selectedCrop}
-                label="Crop"
-                onChange={(e) => farmReportStore.setCropFilter(e.target.value)}
-              >
-                <MenuItem value="">All Crops</MenuItem>
-                {[...new Set(farmReportStore.harvests.map((h) => h.crop))].map(
-                  (crop) => (
-                    <MenuItem key={crop} value={crop}>
-                      {crop}
-                    </MenuItem>
-                  )
-                )}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        {farmReportStore.loading && (
-          <Box textAlign="center" mt={4}>
-            <CircularProgress />
-            <Typography>Loading report...</Typography>
-          </Box>
-        )}
-
-        {!farmReportStore.hasData && !farmReportStore.loading && (
-          <Typography>
-            No data available yet. Start by adding harvest or environmental
-            records.
-          </Typography>
-        )}
-
-        {!farmReportStore.loading && farmReportStore.hasData && (
-          <Grid container spacing={3}>
-            <Grid container spacing={2}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Yield Over Time
-                  </Typography>
-                  <LineChart
-                    width={500}
-                    height={300}
-                    data={toJS(farmReportStore.filteredHarvest)}
-                  >
-                    <CartesianGrid stroke="#ccc" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="yield"
-                      stroke="#82ca9d"
-                      dot={false}
-                    />
-                  </LineChart>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    SoilPH vs Yield
-                  </Typography>
-                  <LineChart
-                    width={500}
-                    height={300}
-                    data={toJS(
-                      this.mergeByDate(
-                        farmReportStore.filteredHarvest,
-                        farmReportStore.filteredEnvironment
-                      )
-                    )}
-                  >
-                    <CartesianGrid stroke="#ccc" />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Line
-                      yAxisId="left"
-                      dataKey="yield"
-                      stroke="#82ca9d"
-                      dot={false}
-                    />
-                    <Line
-                      yAxisId="right"
-                      dataKey="soilPH"
-                      stroke="#8884d8"
-                      dot={false}
-                    />
-                  </LineChart>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid container spacing={2}>
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    📋 Harvest Table
-                  </Typography>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Farm</TableCell>
-                        <TableCell>Crop</TableCell>
-                        <TableCell>Yield (kg)</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {farmReportStore.filteredHarvest.map((h) => (
-                        <TableRow key={h.id}>
-                          <TableCell>{h.date}</TableCell>
-                          <TableCell>
-                            {
-                              farmManagerStore.farms.find(
-                                (f) => f.id === h.farmId
-                              )?.name || h.farmId
-                            }
-                          </TableCell>
-                          <TableCell>{h.crop}</TableCell>
-                          <TableCell>{h.yield}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
+export default function Reports({ token, farms }: { token: string; farms: FarmForm[] }) {
+  const [harvests, setHarvests] = useState<Harvest[]>([]);
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [farmId, setFarmId] = useState('');
+  const [crop, setCrop] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError('');
+    Promise.all([
+      request<Harvest[]>(token, '/harvests', 'GET', undefined, controller.signal),
+      request<Environment[]>(token, '/environments', 'GET', undefined, controller.signal),
+    ]).then(([harvests, environments]) => {
+      setHarvests(harvests); setEnvironments(environments);
+    }).catch(error => { if (!controller.signal.aborted) setError(message(error)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [token]);
+  const selected = harvests.filter(h => (!farmId || h.farmId === farmId) && (!crop || h.crop === crop));
+  const selectedEnvironment = environments.filter(e => !farmId || e.farmId === farmId);
+  const byDate = new Map<string, { date: string; yield?: number; soilPH?: number }>();
+  selected.forEach(h => byDate.set(h.date, { date: h.date, yield: h.yield }));
+  selectedEnvironment.forEach(e => byDate.set(e.date, { ...byDate.get(e.date), date: e.date, soilPH: e.soilPH }));
+  const chart = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return <Stack spacing={3}>
+    <Typography variant="h5" component="h2" fontWeight={750}>Farm reports</Typography>
+    {loading && <LinearProgress />}
+    {error && <Alert severity="error">{error}</Alert>}
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <TextField select label="Farm" value={farmId} fullWidth onChange={e => setFarmId(e.target.value)}>
+        <MenuItem value="">All farms</MenuItem>{farms.map(f => <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>)}
+      </TextField>
+      <TextField select label="Crop" value={crop} fullWidth onChange={e => setCrop(e.target.value)}>
+        <MenuItem value="">All crops</MenuItem>{[...new Set(harvests.map(h => h.crop))].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+      </TextField>
+    </Stack>
+    {!loading && !error && !selected.length && !selectedEnvironment.length && <Alert severity="info">
+      No matching records yet. Add a harvest from My farms to start building your reports.
+    </Alert>}
+    {!loading && !error && (selected.length > 0 || selectedEnvironment.length > 0) && <>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 2 }}>
+        <Card variant="outlined"><CardContent>
+          <Typography variant="h6">Yield over time</Typography>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={selected}><CartesianGrid stroke="#e0e5d7" /><XAxis dataKey="date" /><YAxis />
+              <Tooltip /><Line dataKey="yield" stroke="#124e38" dot={false} /></LineChart>
+          </ResponsiveContainer>
+        </CardContent></Card>
+        <Card variant="outlined"><CardContent>
+          <Typography variant="h6">Soil pH and yield</Typography>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={chart}><CartesianGrid stroke="#e0e5d7" /><XAxis dataKey="date" />
+              <YAxis yAxisId="left" /><YAxis yAxisId="right" orientation="right" /><Tooltip />
+              <Line yAxisId="left" dataKey="yield" stroke="#124e38" dot={false} />
+              <Line yAxisId="right" dataKey="soilPH" stroke="#a78128" dot={false} /></LineChart>
+          </ResponsiveContainer>
+        </CardContent></Card>
       </Box>
-    );
-  }
-
-  private mergeByDate(harvests: Harvest[], env: Environment[]) {
-    const map = new Map();
-
-    harvests.forEach((h) => {
-      map.set(h.date, { date: h.date, yield: h.yield });
-    });
-
-    env.forEach((e) => {
-      const existing = map.get(e.date) || { date: e.date };
-      map.set(e.date, { ...existing, soilPH: e.soilPH });
-    });
-
-    return Array.from(map.values());
-  }
+      <TableContainer component={Card} variant="outlined"><Table size="small">
+        <TableHead><TableRow>{['Date', 'Farm', 'Crop', 'Yield (kg)'].map(t => <TableCell key={t}>{t}</TableCell>)}</TableRow></TableHead>
+        <TableBody>{selected.map(h => <TableRow key={h.id}><TableCell>{h.date}</TableCell>
+          <TableCell>{farms.find(f => f.id === h.farmId)?.name || h.farmId}</TableCell>
+          <TableCell>{h.crop}</TableCell><TableCell>{h.yield}</TableCell></TableRow>)}</TableBody>
+      </Table></TableContainer>
+    </>}
+  </Stack>;
 }
-
-export default Reports;
-
